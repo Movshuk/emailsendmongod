@@ -30,7 +30,7 @@ public class PreRunner implements CommandLineRunner {
                 logger.info("Collection is not empty.");
             } else {
                 messageRepository.save(message);
-                logger.info("Object is saved.");
+                logger.info("Collection is empty. Object was saved.");
             }
             logger.info("The PreRunner is finished.");
     };
