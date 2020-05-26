@@ -12,7 +12,7 @@ import java.util.Set;
 public class Message {
     @Id
     private String id;
-    private Status status;    // new, success, error
+    private MessageStatus status;    // new, success, error
     private String subject;
     private String text;
     private String to;
@@ -24,11 +24,6 @@ public class Message {
 
     private List<String> copyTo;
 
-    enum Status {
-        NEW, ERROR, SUCCESS
-    }
-
-
     public Message() {
     }
 
@@ -39,20 +34,20 @@ public class Message {
         this.date = date;
     }
 
+    public MessageStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(MessageStatus status) {
+        this.status = status;
+    }
+
     public String getId() {
         return id;
     }
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public Enum getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
     }
 
     public String getSubject() {

@@ -21,6 +21,7 @@ public class PreRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
             logger.info("The PreRunner is working.");
+
             Message message = new Message(
                     "TEXT",
                     LocalDateTime.now()
