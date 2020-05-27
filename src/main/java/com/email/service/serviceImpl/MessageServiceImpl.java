@@ -6,16 +6,14 @@ import com.email.model.MessagePattern;
 import com.email.model.MessageStatus;
 import com.email.repository.MessageRepository;
 import com.email.service.MessageService;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,6 +23,9 @@ public class MessageServiceImpl implements MessageService {
 
     @Autowired
     MessageRepository messageRepository;
+
+    @Autowired
+    FileStorageServiceImpl fileStorageServiceImpl;
 
     public Message addMessage(MessagePattern messagePattern) {
 
@@ -85,12 +86,70 @@ public class MessageServiceImpl implements MessageService {
     }
 
     public boolean existAttachment(String attachment) {
-        List<Message> messages = messageRepository.withAttachment(attachment);
+        List<Message> messages = messageRepository.getAllWithAttachment(attachment);
 
         return !messages.isEmpty();
     }
 
     public void save(Message message) {
         messageRepository.save(message);
+    }
+
+    public Map<String, Integer> getCountMessages() {
+
+        Map<String, Integer> response = new HashMap<>(1);
+        response.put("Total count of messages:", (int) messageRepository.count());
+        return response;
+    }
+
+    /**
+     * Remove atachments
+     * @param id
+     * @param attachment
+     * @return
+     */
+    public boolean removeAttachment(String id, String attachment) {
+        Message message = getMessageById(id);
+
+        if (message == null) {
+            return false;
+        }
+
+        final Set<String> attachments = message.getAttachments();
+
+        if (attachments != null) {
+
+            for(Iterator<String> iterator = message.getAttachments().iterator(); iterator.hasNext();) {
+                String s =  iterator.next();
+                String _s = fileStorageServiceImpl.getPath(attachment);
+                if (s.equals(_s)) {
+                    iterator.remove();
+                }
+            }
+        }
+
+        save(message);
+        return true;
+    }
+
+    public List<Message> getAllMessagesByParams(String id,
+                                         String status,
+                                         String subject,
+                                         String from,
+                                         String to) {
+
+        ObjectId objectId = null;
+        if (id != null && !id.trim().isEmpty()) {
+            objectId = new ObjectId(id);
+
+        } else {
+            objectId = null;
+        }
+
+        return messageRepository.getAllMessagesByParams(objectId,
+                                                status,
+                                                subject,
+                                                from,
+                                                to);
     }
 }

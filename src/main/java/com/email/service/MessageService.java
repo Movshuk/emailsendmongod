@@ -2,6 +2,7 @@ package com.email.service;
 
 import com.email.model.Message;
 import com.email.model.MessagePattern;
+import org.bson.types.ObjectId;
 
 import java.util.List;
 import java.util.Map;
@@ -17,4 +18,12 @@ public interface MessageService {
     Map<String, Boolean> deleteMessageById(String id);
 
     void save(Message message);
+
+    Map<String, Integer> getCountMessages();
+
+    List<Message> getAllMessagesByParams(String id,
+                                         String status,
+                                         String subject,
+                                         String from,
+                                         String to);
 }

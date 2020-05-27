@@ -6,6 +6,7 @@ import com.email.model.MessagePattern;
 import com.email.model.MessageStatus;
 import com.email.model.UploadFileResponse;
 import com.email.service.FileStorageService;
+import com.email.service.serviceImpl.MessageComparatorImpl;
 import com.email.service.serviceImpl.MessageServiceImpl;
 import com.email.service.serviceImpl.SendServiceImpl;
 import com.google.common.collect.ImmutableSet;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -40,7 +42,7 @@ public class MessageController {
     SendServiceImpl sendServiceImpl;
 
     @Autowired
-    private FileStorageService fileStorageService;
+    private FileStorageService fileStorageServiceImpl;
 
     @CrossOrigin
     @ApiOperation(value = "Получить список всех писем с сортировкой (параметрически)",
@@ -89,7 +91,7 @@ public class MessageController {
 
         logger.info("Upload file [name:{}; type:{}; size: {}]", file.getOriginalFilename(), file.getContentType(), file.getSize());
 
-        final Path path = fileStorageService.storeFile(file);
+        final Path path = fileStorageServiceImpl.storeFile(file);
 
         Message message = messageServiceImpl.getMessageById(id);
         final Set<String> attachments = message.getAttachments();
@@ -107,7 +109,20 @@ public class MessageController {
                 file.getContentType(),
                 file.getSize()
         );
+    }
 
+    @CrossOrigin
+    @ApiOperation(value = "Удаление файла из сообщения")
+    @RequestMapping(value = "/emails/{id}/attach", produces = "application/json", method = RequestMethod.DELETE)
+    public ResponseEntity<HttpStatus> removeAttachment(@PathVariable("id") String id,
+                                   @RequestParam("attachment") String attachment) {
+        try {
+            messageServiceImpl.removeAttachment(id, attachment);
+            fileStorageServiceImpl.delete(attachment);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+        }
     }
 
     @CrossOrigin
@@ -130,6 +145,58 @@ public class MessageController {
             logger.info("Ошибка отправки письма с id: " + id + " " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
         }
+    }
+
+    @CrossOrigin
+    @ApiOperation(value = "Получить общее количество писем в хранилище")
+    @RequestMapping(value = "/emails/count", method = RequestMethod.GET)
+    public Map<String, Integer> getCountMessages() {
+        return messageServiceImpl.getCountMessages();
+    }
+
+    @CrossOrigin
+    @ApiOperation(value = "Редактирование письма по заданному id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully.")
+    })
+    @RequestMapping(value = "/emails/{id}/update", produces = "application/json", method = RequestMethod.PUT)
+    public Message updateMessageById(@RequestBody Message messageNewVersion) {
+
+        Message messageLastVersion = messageServiceImpl.getMessageById(messageNewVersion.getId());
+
+        if (messageLastVersion == null) {
+            messageServiceImpl.save(messageNewVersion);
+            return messageNewVersion;
+        } else {
+            messageLastVersion.merge(messageNewVersion);
+            messageServiceImpl.save(messageLastVersion);
+            return messageLastVersion;
+        }
+    }
+
+    @CrossOrigin
+    @ApiOperation(value = "Получить список сообщений по параметрам")
+    @RequestMapping(value = "/emails/search", method = RequestMethod.GET)
+    public List<Message> getAllMessagesByParams(Integer page,
+                                                Integer pageSize,
+                                                String id,
+                                                String status,
+                                                String subject,
+                                                String from,
+                                                String to,
+                                                String sortParam) {
+        if(sortParam == null) {
+            sortParam = "asc";
+        }
+
+        if(page == null) page = 0;
+        if(pageSize == null) pageSize = 5;
+
+        return messageServiceImpl.getAllMessagesByParams(id, status, subject, from, to)
+                .stream()
+                .sorted(new MessageComparatorImpl(sortParam))
+                .skip((page) * pageSize).limit(pageSize)
+                .collect(Collectors.toList());
     }
 
 

@@ -34,6 +34,18 @@ public class Message {
         this.date = date;
     }
 
+    public void merge(Message message) {
+        setId(message.getId());
+        setStatus(message.getStatus());
+        setAttachments(message.getAttachments());
+        setDate(message.getDate());
+        setFrom(message.getFrom());
+        setTo(message.getTo());
+        setCopyTo(message.getCopyTo());
+        setText(message.getText());
+        setSubject(message.getSubject());
+    }
+
     public MessageStatus getStatus() {
         return status;
     }
