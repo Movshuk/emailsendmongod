@@ -3,9 +3,11 @@ package com.email.controller;
 import com.email.exception.ResourceNotFoundException;
 import com.email.model.Message;
 import com.email.model.MessagePattern;
+import com.email.model.MessageStatus;
 import com.email.model.UploadFileResponse;
 import com.email.service.FileStorageService;
 import com.email.service.serviceImpl.MessageServiceImpl;
+import com.email.service.serviceImpl.SendServiceImpl;
 import com.google.common.collect.ImmutableSet;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,6 +16,9 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +36,9 @@ public class MessageController {
 
     @Autowired
     MessageServiceImpl messageServiceImpl;
+    @Autowired
+    SendServiceImpl sendServiceImpl;
+
     @Autowired
     private FileStorageService fileStorageService;
 
@@ -101,6 +109,29 @@ public class MessageController {
         );
 
     }
+
+    @CrossOrigin
+    @ApiOperation(value = "Отправка простого сообщения по id")
+    @RequestMapping(value = "/emails/{id}/simple-send", method = RequestMethod.POST)
+    public ResponseEntity<HttpStatus> sendMessage(@PathVariable("id") String id) throws ResourceNotFoundException {
+
+
+        Message email = messageServiceImpl.getMessageById(id);
+
+        try {
+            sendServiceImpl.sendSimpleEmail(email);
+            email.setStatus(MessageStatus.SUCCESS);
+            logger.info("Письмо с id: " + id + "отправлено.");
+            messageServiceImpl.save(email);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (MailException e) {
+            email.setStatus(MessageStatus.ERROR);
+            messageServiceImpl.save(email);
+            logger.info("Ошибка отправки письма с id: " + id + " " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
 
 
 }
