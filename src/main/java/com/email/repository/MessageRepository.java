@@ -27,4 +27,7 @@ public interface MessageRepository extends MongoRepository<Message, String> {
                                  String subject,
                                  String from,
                                  String to);
+
+    @Query("{'status' : ?0}")
+    List<Message> getAllWithStatus(String status);
 }

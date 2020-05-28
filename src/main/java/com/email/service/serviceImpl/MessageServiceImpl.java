@@ -152,4 +152,8 @@ public class MessageServiceImpl implements MessageService {
                                                 from,
                                                 to);
     }
+
+    public List<Message> getAllWithStatus(MessageStatus status) {
+        return messageRepository.getAllWithStatus(status.toString());
+    }
 }

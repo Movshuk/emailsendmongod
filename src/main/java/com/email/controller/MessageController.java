@@ -23,6 +23,8 @@ import org.springframework.mail.MailException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.mail.MessagingException;
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -148,6 +150,24 @@ public class MessageController {
     }
 
     @CrossOrigin
+    @ApiOperation(value = "Отправка сообщения по id с вложением")
+    @RequestMapping(value = "/emails/{id}/send", method = RequestMethod.POST)
+    public ResponseEntity<HttpStatus> sendEmailWithAttachment(@PathVariable("id") String id) throws MessagingException, FileNotFoundException, ResourceNotFoundException {
+
+        Message email = messageServiceImpl.getMessageById(id);
+        try {
+            sendServiceImpl.sendEmailWithAttachment(email);
+            email.setStatus(MessageStatus.SUCCESS);
+            messageServiceImpl.save(email);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch(Exception e) {
+            email.setStatus(MessageStatus.ERROR);
+            messageServiceImpl.save(email);
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
+    @CrossOrigin
     @ApiOperation(value = "Получить общее количество писем в хранилище")
     @RequestMapping(value = "/emails/count", method = RequestMethod.GET)
     public Map<String, Integer> getCountMessages() {
@@ -185,18 +205,36 @@ public class MessageController {
                                                 String from,
                                                 String to,
                                                 String sortParam) {
-        if(sortParam == null) {
+        if(sortParam == null)
             sortParam = "asc";
-        }
 
-        if(page == null) page = 0;
-        if(pageSize == null) pageSize = 5;
+        if(page == null)
+            page = 0;
+
+        if(pageSize == null)
+            pageSize = 5;
 
         return messageServiceImpl.getAllMessagesByParams(id, status, subject, from, to)
                 .stream()
                 .sorted(new MessageComparatorImpl(sortParam))
                 .skip((page) * pageSize).limit(pageSize)
                 .collect(Collectors.toList());
+    }
+
+    @CrossOrigin
+    @ApiOperation(value = "Получить список сообщений по статусу")
+    @RequestMapping(value = "/emails/status", method = RequestMethod.GET)
+    public List<Message> getAllWithStatus(String messageStatus) {
+
+        if(messageStatus == null || messageStatus.trim().isEmpty())
+            return null;
+
+        switch(messageStatus.toUpperCase()) {
+            case "NEW", "ERROR", "SUCCESS":
+                return messageServiceImpl.getAllWithStatus(MessageStatus.valueOf(messageStatus.toUpperCase()));
+            default:
+                return null;
+        }
     }
 
 
