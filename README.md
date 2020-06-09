@@ -15,6 +15,7 @@
 * Spring Boot 2.2.6.RELEASE
 * Swagger 2.9.2
 * Mongo DB 3.6.8
+* JUnit 5.0.0-ALPHA
 
 ## Инсталляция
     mvn -Dmaven.test.skip=true install
