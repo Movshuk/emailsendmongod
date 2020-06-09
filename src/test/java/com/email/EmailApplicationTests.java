@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 @SpringBootTest
 class EmailApplicationTests {
@@ -19,7 +19,7 @@ class EmailApplicationTests {
     @Test
     void contextLoads() {
         logger.info("Run contextLoads test.");
-        Assert.assertNotEquals(controller, null);
+        Assertions.assertNotEquals(controller, null);
     }
 
 }
