@@ -230,7 +230,7 @@ public class MessageController {
             return null;
 
         switch(messageStatus.toUpperCase()) {
-            case "NEW", "ERROR", "SUCCESS":
+            case "NEW": case "ERROR": case "SUCCESS":
                 return messageServiceImpl.getAllWithStatus(MessageStatus.valueOf(messageStatus.toUpperCase()));
             default:
                 return null;
